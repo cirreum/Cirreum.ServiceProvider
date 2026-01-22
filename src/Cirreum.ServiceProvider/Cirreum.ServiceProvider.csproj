@@ -9,7 +9,7 @@
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.2" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="10.0.2" />		
-		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
 		<PackageReference Include="Cirreum.Providers" Version="1.0.106" />
 	</ItemGroup>
 
