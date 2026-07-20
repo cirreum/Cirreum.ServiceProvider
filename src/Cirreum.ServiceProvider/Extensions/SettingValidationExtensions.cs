@@ -1,26 +1,30 @@
-﻿namespace Cirreum.ServiceProvider.Configuration;
+namespace Cirreum.ServiceProvider.Configuration;
 
-using System.Collections.Generic;
+using Cirreum.ServiceProvider;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Extension methods for validating service provider instance settings.
 /// </summary>
 internal static class SettingValidationExtensions {
 
-	private static readonly Dictionary<string, string> processedConnectionStrings = [];
-
 	/// <summary>
-	/// Validates that the connection string is properly configured and unique across service instances.
+	/// Validates that the connection string is properly configured and unique across the
+	/// service instances registered into <paramref name="services"/>. Uniqueness is scoped
+	/// to the service collection — the state lives in the composition, not the process,
+	/// so multiple hosts in one process are isolated.
 	/// </summary>
 	/// <param name="settings">The service provider instance settings to validate.</param>
+	/// <param name="services">The service collection the instance is being registered into.</param>
 	/// <param name="providerServiceType">The type of provider service.</param>
 	/// <param name="providerServiceName">The name of the provider service.</param>
 	/// <exception cref="InvalidOperationException">
-	/// Thrown when the connection string is missing or when the same connection string 
-	/// is used by multiple service instances.
+	/// Thrown when the connection string is missing or when the same connection string
+	/// is used by multiple service instances in this composition.
 	/// </exception>
 	public static void ValidateConnectionString(
 		this ServiceProviderInstanceSettings settings,
+		IServiceCollection services,
 		ProviderType providerServiceType,
 		string providerServiceName) {
 
@@ -38,10 +42,12 @@ internal static class SettingValidationExtensions {
 
 		var connectionKey = $"Cirreum.{providerServiceType}.{providerServiceName}.Connections:{connectionHash}";
 
-		if (!processedConnectionStrings.TryAdd(connectionKey, settings.Name)) {
+		if (services.Any(d => d.ImplementationInstance is ProcessedRegistrationKey processed
+			&& processed.Value == connectionKey)) {
 			throw new InvalidOperationException(
 				$"A connection string for service instance '{settings.Name}' has already been configured. Cannot register the same connection with multiple instances.");
 		}
+		services.AddSingleton(new ProcessedRegistrationKey(connectionKey));
 
 	}
 

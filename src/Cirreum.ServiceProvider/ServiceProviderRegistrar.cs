@@ -28,9 +28,6 @@ public abstract class ServiceProviderRegistrar<TSettings, TInstanceSettings, THe
 	where TInstanceSettings : ServiceProviderInstanceSettings<THealthOptions>
 	where THealthOptions : ServiceProviderHealthCheckOptions, new() {
 
-	private static readonly Dictionary<string, string> processedInstances = [];
-	private static readonly Dictionary<string, bool> healthChecks = [];
-
 	/// <inheritdoc/>
 	public abstract ProviderType ProviderType { get; }
 
@@ -118,11 +115,15 @@ public abstract class ServiceProviderRegistrar<TSettings, TInstanceSettings, THe
 		IServiceCollection services,
 		IConfiguration configuration) {
 
-		// Ensure no duplicate registration keys
+		// Ensure no duplicate registration keys. State is scoped to this service
+		// collection — it lives in the composition, not the process, so multiple hosts
+		// in one process are isolated.
 		var providerRegistrationKey = $"Cirreum.{this.ProviderType}.{this.ProviderName}:{key}";
-		if (!processedInstances.TryAdd(providerRegistrationKey, settings.Name)) {
+		if (services.Any(d => d.ImplementationInstance is ProcessedRegistrationKey processed
+			&& processed.Value == providerRegistrationKey)) {
 			throw new InvalidOperationException($"A service with the key of '{key}' has already been registered.");
 		}
+		services.AddSingleton(new ProcessedRegistrationKey(providerRegistrationKey));
 
 		// Must have settings...
 		if (settings is null) {
@@ -146,7 +147,7 @@ public abstract class ServiceProviderRegistrar<TSettings, TInstanceSettings, THe
 		}
 
 		// Validate ConnectionString regardless of provider specific validation
-		settings.ValidateConnectionString(this.ProviderType, this.ProviderName);
+		settings.ValidateConnectionString(services, this.ProviderType, this.ProviderName);
 
 		// Provider specific validation...
 		this.ValidateSettings(settings);
@@ -236,11 +237,15 @@ public abstract class ServiceProviderRegistrar<TSettings, TInstanceSettings, THe
 		IServiceCollection services,
 		string name,
 		Action<IHealthChecksBuilder> addHealthCheck) {
+		// Dedup is per service collection — a second host composed in the same process
+		// must register its own health checks rather than silently inheriting none.
 		var healthCheckKey = $"Cirreum.ServiceProvider.HealthChecks::{name}";
-		if (!healthChecks.ContainsKey(healthCheckKey)) {
-			healthChecks[healthCheckKey] = true;
-			addHealthCheck(services.AddHealthChecks());
+		if (services.Any(d => d.ImplementationInstance is ProcessedRegistrationKey processed
+			&& processed.Value == healthCheckKey)) {
+			return;
 		}
+		services.AddSingleton(new ProcessedRegistrationKey(healthCheckKey));
+		addHealthCheck(services.AddHealthChecks());
 	}
 
 }
