@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `Identifier` on `ServiceProviderInstanceSettings` — "an Id associated with the provider, if
+  required," mirroring the long-standing property on `SecretsProviderInstanceSettings` so both
+  provider families share one convention. Implementations document their interpretation (Azure
+  providers resolve it as the Entra tenant).
+- `Credential` on `ServiceProviderInstanceSettings` — optional identity-based credential
+  configuration, surfaced as a nested `Credential` block (`Mode`: `Default` / `ManagedIdentity` /
+  `Developer`, plus optional `IdentityId`) using the shared `CredentialSettings` taxonomy from
+  `Cirreum.Providers` 1.3.0. Nullable by design: absence means default credential behavior;
+  presence lets implementations detect contradictory configuration (e.g. a credential block
+  alongside key-based auth).
+
+### Updated
+
+- Updated NuGet packages.
+
 ## [1.0.23] - 2026-07-20
 
 ### Fixed

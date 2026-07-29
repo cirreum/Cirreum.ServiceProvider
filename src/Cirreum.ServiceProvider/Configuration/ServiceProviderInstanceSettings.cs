@@ -21,6 +21,11 @@ public abstract class ServiceProviderInstanceSettings
 	public string Name { get; set; } = "";
 
 	/// <summary>
+	/// Gets or sets an Id associated with the provider, if required.
+	/// </summary>
+	public string? Identifier { get; set; }
+
+	/// <summary>
 	/// Gets or sets a boolean value that indicates if health checking is enabled.
 	/// </summary>
 	/// <value>
@@ -32,6 +37,12 @@ public abstract class ServiceProviderInstanceSettings
 	/// Gets or sets the resolved connection string (connection string, service url, endpoint, namespace etc.)
 	/// </summary>
 	public string? ConnectionString { get; set; }
+
+	/// <summary>
+	/// Optional identity-based credential configuration, used when the instance authenticates
+	/// with a platform identity rather than a connection string or key.
+	/// </summary>
+	public CredentialSettings? Credential { get; set; }
 
 	/// <summary>
 	/// Allows a derived service provider to implement custom connection string parsing and potentially populate

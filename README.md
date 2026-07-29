@@ -38,6 +38,18 @@ Configuration hierarchy providing:
 - Provider-level settings with tracing controls
 - Instance-specific connection and health check configuration
 - Automatic connection string parsing and validation
+- Optional `Identifier` — an Id associated with the provider, if required; implementations document their interpretation (Azure providers resolve it as the Entra tenant)
+- Optional nested `Credential` block (`Mode`: `Default` / `ManagedIdentity` / `Developer`, plus optional `IdentityId`) for instances that authenticate with a platform identity rather than a connection string or key; identity-capable implementations map it to their platform's credential types
+
+```json
+"Instances": {
+  "default": {
+    "ConnectionString": "<connection string or endpoint uri>",
+    "Identifier": "<optional provider-interpreted id>",
+    "Credential": { "Mode": "ManagedIdentity", "IdentityId": "<platform identity id>" }
+  }
+}
+```
 
 ### Health Check Integration
 
